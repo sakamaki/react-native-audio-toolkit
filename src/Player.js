@@ -4,6 +4,7 @@ import _ from 'lodash';
 import async from 'async';
 import EventEmitter from 'eventemitter3';
 import MediaStates from './MediaStates';
+import * as RNFS from 'react-native-fs';
 
 const RCTAudioPlayer = NativeModules.AudioPlayer;
 
@@ -12,6 +13,7 @@ let playerId = 0;
 const defaultPlayerOptions = {
   autoDestroy: true,
   continuesToPlayInBackground: false,
+  useAndroidApkExpansionFile: true,
 };
 
 /**
@@ -22,7 +24,11 @@ class Player extends EventEmitter {
   constructor(path, options = defaultPlayerOptions) {
     super();
 
-    this._path = path;
+    if (Platform.OS === 'android' && options.useAndroidApkExpansionFile) {
+      this._path = `${RNFS.DocumentDirectoryPath}/${path}`;
+    } else {
+      this._path = path;
+    }
     this._options = options;
 
     this._playerId = playerId++;
