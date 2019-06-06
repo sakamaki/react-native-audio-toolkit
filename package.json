@@ -1,6 +1,6 @@
 {
   "name": "react-native-audio-toolkit",
-  "version": "1.0.8",
+  "version": "1.0.6",
   "description": "Cross-platform audio library for React Native",
   "repository": {
     "type": "git",
@@ -13,7 +13,6 @@
   "dependencies": {
     "async": "^2.0.0",
     "eventemitter3": "^1.2.0",
-    "lodash": "^4.13.1",
-    "react-native-fs": "^2.13.3"
+    "lodash": "^4.13.1"
   }
 }
