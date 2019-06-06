@@ -27,6 +27,8 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.IOException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.Thread;
 import java.util.HashMap;
 import java.util.Map;
@@ -125,10 +127,48 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         return errObj(code, message, true);
     }
 
-    private Uri uriFromPath(String path) {
+    private void copyFile(String in, String out) throws IOException{
+        FileInputStream fileIn = new FileInputStream(in);
+        FileOutputStream fileOut = new FileOutputStream(out);
+ 
+        byte[] buf = new byte[256];
+        int len;
+ 
+        while((len = fileIn.read(buf)) != -1){
+            fileOut.write(buf);    
+        }
+ 
+        fileOut.flush();
+ 
+        fileOut.close();
+        fileIn.close();
+    }
+
+    private Uri uriFromPath(String path, final Callback callback) {
         File file = null;
         String fileNameWithoutExt;
         String extPath;
+
+        // Try finding file in app mount directory
+        if (path.startsWith("/mnt")) {
+            Log.d(LOG_TAG, "/mnt ni kita");
+            File fileFromObb = new File(path);
+            String filesDir = new ContextWrapper(this.context).getFilesDir() + "/";
+            extPath = filesDir + fileFromObb.getName();
+            Log.d(LOG_TAG, extPath);
+            file = new File(extPath);
+            if (file.exists()) {
+                return Uri.fromFile(file);
+            } else {
+                try {
+                    copyFile(path, extPath);
+                } catch (IOException e) {
+                    callback.invoke(errObj("copyfile", e.toString()));
+                    return Uri.parse(path);
+                }
+                return Uri.fromFile(file);
+            }
+        }
 
         // Try finding file in app data directory
         extPath = new ContextWrapper(this.context).getFilesDir() + "/" + path;
@@ -235,7 +275,7 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         destroy(playerId);
         this.lastPlayerId = playerId;
 
-        Uri uri = uriFromPath(path);
+        Uri uri = uriFromPath(path, callback);
 
         //MediaPlayer player = MediaPlayer.create(this.context, uri, null, attributes);
         MediaPlayer player = new MediaPlayer();
